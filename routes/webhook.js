@@ -88,6 +88,9 @@ const handlerEvent = async (event) => {
           await replyText(replyToken, text);
           return "その他";
       }
+    case "follow":
+      replyText(replyToken, '友達登録ありがとうございます！🎉\n入力された画像を要約、さらにそこから問題を生成するLINEBotです😀');
+
     default:
       return "その他";
   }
