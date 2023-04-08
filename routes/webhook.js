@@ -25,7 +25,7 @@ const configuration = new Configuration({
 let lastImageTimestamp = 0;
 
 let images = [];
-let mode = ""
+let mode = "";
 /**
  * 本番用のルート
  */
@@ -59,27 +59,29 @@ const handlerEvent = async (event) => {
       let text;
       switch (message.type) {
         case "text":
-          if (message.text == "送信完了") {
+          if (message.text == "はい") {
             if (images.length == 0) {
-              noImageText(replyToken)
+              replyText(replyToken, "画像が一枚も選択されていません💦")
             } else {
-              await requestChatgpt(replyToken, mode, images.join())
-              images = []
+              await requestChatgpt(replyToken, mode, images.join());
+              images = [];
             }
           } else if (message.text == "要約") {
-            mode = "要約"
+            mode = "要約";
             displayQuickReply(replyToken, mode);
           } else if (message.text == "問題") {
-            mode = "問題"
+            mode = "問題";
             displayQuickReply(replyToken, mode);
           } else if (message.text == "このやり取りを終了する") {
             await replyButtonTemplete(replyToken);
+          } else {
+            replyText(replyToken, "予期せぬテキストです。")
           }
-          return "オウム返し成功";
+          return "成功";
         case "image":
           text = await imageToText(Number(message.id));
           images.push(text);
-          replyConfirmationTemplete(replyToken)
+          replyConfirmationTemplete(replyToken, mode);
           return "画像を文字起こししました";
         default:
           text = "テキストを送信してください";
@@ -120,7 +122,7 @@ const replyButtonTemplete = async (token) => {
       actions: [
         {
           type: "message",
-          label: "要約文",
+          label: "要約",
           text: "要約",
         },
         {
@@ -137,7 +139,7 @@ const replyConfirmationTemplete = async (token, mode) => {
   const currentTimestamp = new Date().getTime();
 
   if (currentTimestamp - lastImageTimestamp < debounceTime) {
-    return 
+    return;
   }
   lastImageTimestamp = currentTimestamp;
 
@@ -151,17 +153,17 @@ const replyConfirmationTemplete = async (token, mode) => {
         {
           type: "message",
           label: "はい",
-          text: "送信完了"
+          text: "はい",
         },
         {
           type: "message",
           label: "いいえ",
-          text: "いいえ"
-        }
-      ]
-    }
-  })
-}
+          text: "いいえ",
+        },
+      ],
+    },
+  });
+};
 
 /**
  * 画像をテキストに変換する関数
@@ -192,6 +194,18 @@ const requestChatgpt = async (token, mode, imageText) => {
     return client.replyMessage(token, {
       type: "text",
       text: res,
+      quickReply: {
+        items: [
+          {
+            type: "action",
+            action: {
+              type: "message",
+              label: "このやり取りを終了する",
+              text: "このやり取りを終了する",
+            },
+          },
+        ],
+      },
     });
   } else if (mode === "問題") {
     completion = await openai.createChatCompletion({
@@ -214,11 +228,11 @@ const requestChatgpt = async (token, mode, imageText) => {
             action: {
               type: "message",
               label: "このやり取りを終了する",
-              text: "このやり取りを終了する"
-            }
-          }
-        ]
-      }
+              text: "このやり取りを終了する",
+            },
+          },
+        ],
+      },
     });
   } else {
     return client.replyMessage(token, {
@@ -229,19 +243,9 @@ const requestChatgpt = async (token, mode, imageText) => {
 };
 
 const displayQuickReply = (token, mode) => {
-  
   return client.replyMessage(token, {
     type: "text",
     text: `${mode}ですね！\n${mode}したい画像を送信してください。`,
-  });
-};
-
-
-
-const noImageText = (token) => {
-  return client.replyMessage(token, {
-    type: "text",
-    text: "画像が一枚も選択されていません💦",
   });
 };
 
