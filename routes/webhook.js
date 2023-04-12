@@ -140,7 +140,11 @@ const handlerEvent = async (event) => {
           }
           return "成功";
         case "image":
-          if (mode != "問題を作成" && mode != "要約を作成" && mode != "わかりやすく解説") {
+          if (
+            mode != "問題を作成" &&
+            mode != "要約を作成" &&
+            mode != "わかりやすく解説"
+          ) {
             const messages = [
               {
                 type: "text",
@@ -197,7 +201,7 @@ const handlerEvent = async (event) => {
         },
         {
           type: "text",
-          text:"早速試してみてください！！"
+          text: "早速試してみてください！！",
         },
         {
           type: "template",
@@ -335,7 +339,7 @@ const freeTalkChatgpt = async (token) => {
   });
 
   const res = completion.data.choices[0].message.content;
-  tokens.push({ role: "assistant", content: res })
+  tokens.push({ role: "assistant", content: res });
   return client.replyMessage(token, {
     type: "text",
     text: res,
@@ -358,117 +362,121 @@ const requestChatgpt = async (token, mode, imageText) => {
   const openai = new OpenAIApi(configuration);
   let completion;
   // 要約を作成したい場合
-  if (mode === "要約を作成") {
-    tokens = [
-      {
-        role: "system",
-        content: `あなたは日本語で回答するAIチャットボットです。`,
-      },
-      {
-        role: "user",
-        content: `下のテキストの要約を作成してください。 ${imageText}`,
-      },
-    ];
-    completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: tokens,
-    });
+  if (imageText.length > 3000) {
+    compression(token, imageText)
+  } else {
+    if (mode === "要約を作成") {
+      tokens = [
+        {
+          role: "system",
+          content: `あなたは日本語で回答するAIチャットボットです。`,
+        },
+        {
+          role: "user",
+          content: `下のテキストの要約を作成してください。 ${imageText}`,
+        },
+      ];
+      completion = await openai.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: tokens,
+      });
 
-    const res = completion.data.choices[0].message.content;
-    tokens.push({ role: "assistant", content: res });
-    return client.replyMessage(token, {
-      type: "text",
-      text: `${res}\n\n●質問があれば、このまま質問文を送信してください\n●会話の内容をリセットするには「このやり取りを終了する」を押してください。`,
-      quickReply: {
-        items: [
-          {
-            type: "action",
-            action: {
-              type: "message",
-              label: "このやり取りを終了する",
-              text: "このやり取りを終了する",
+      const res = completion.data.choices[0].message.content;
+      tokens.push({ role: "assistant", content: res });
+      return client.replyMessage(token, {
+        type: "text",
+        text: `${res}\n\n●質問があれば、このまま質問文を送信してください\n●会話の内容をリセットするには「このやり取りを終了する」を押してください。`,
+        quickReply: {
+          items: [
+            {
+              type: "action",
+              action: {
+                type: "message",
+                label: "このやり取りを終了する",
+                text: "このやり取りを終了する",
+              },
             },
-          },
-        ],
-      },
-    });
-  }
-  // 問題を作成したい場合
-  else if (mode === "問題を作成") {
-    tokens = [
-      {
-        role: "system",
-        content: `あなたは送信されたテキスト内から日本語で回答するAIチャットボットです。`,
-      },
-      {
-        role: "user",
-        content: `送信されたテキスト内に答えがある問題(解答を聞かれた時に、答えられる問題)を幾つか生成してください。 ${imageText}`,
-      },
-    ];
-    completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: tokens,
-    });
-    const res = completion.data.choices[0].message.content;
-    tokens.push({ role: "assistant", content: res });
-    return client.replyMessage(token, {
-      type: "text",
-      text: `${res}\n\n●質問があれば、このまま質問文を送信してください\n●会話の内容をリセットするには「このやり取りを終了する」を押してください。`,
-      quickReply: {
-        items: [
-          {
-            type: "action",
-            action: {
-              type: "message",
-              label: "このやり取りを終了する",
-              text: "このやり取りを終了する",
+          ],
+        },
+      });
+    }
+    // 問題を作成したい場合
+    else if (mode === "問題を作成") {
+      tokens = [
+        {
+          role: "system",
+          content: `あなたは送信されたテキスト内から日本語で回答するAIチャットボットです。`,
+        },
+        {
+          role: "user",
+          content: `送信されたテキスト内に答えがある問題(解答を聞かれた時に、答えられる問題)を幾つか生成してください。 ${imageText}`,
+        },
+      ];
+      completion = await openai.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: tokens,
+      });
+      const res = completion.data.choices[0].message.content;
+      tokens.push({ role: "assistant", content: res });
+      return client.replyMessage(token, {
+        type: "text",
+        text: `${res}\n\n●質問があれば、このまま質問文を送信してください\n●会話の内容をリセットするには「このやり取りを終了する」を押してください。`,
+        quickReply: {
+          items: [
+            {
+              type: "action",
+              action: {
+                type: "message",
+                label: "このやり取りを終了する",
+                text: "このやり取りを終了する",
+              },
             },
-          },
-          {
-            type: "action",
-            action: {
-              type: "message",
-              label: "解答",
-              text: "解答を作成",
+            {
+              type: "action",
+              action: {
+                type: "message",
+                label: "解答",
+                text: "解答を作成",
+              },
             },
-          },
-        ],
-      },
-    });
-  } else if (mode === "わかりやすく解説") {
-    tokens = [
-      {
-        role: "system",
-        content: `あなたは日本語で回答するAIチャットボットです。`,
-      },
-      {
-        role: "user",
-        content: `生成されたテキスト内の内容を論理的に、小学生でもわかるように解説してください。 ${imageText}`,
-      },
-    ];
-    console.log(imageText)
-    completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: tokens,
-    });
-    const res = completion.data.choices[0].message.content;
-    tokens.push({ role: "assistant", content: res });
-    return client.replyMessage(token, {
-      type: "text",
-      text: `${res}\n\n●質問があれば、このまま質問文を送信してください\n●会話の内容をリセットするには「このやり取りを終了する」を押してください。`,
-      quickReply: {
-        items: [
-          {
-            type: "action",
-            action: {
-              type: "message",
-              label: "このやり取りを終了する",
-              text: "このやり取りを終了する",
+          ],
+        },
+      });
+    } else if (mode === "わかりやすく解説") {
+      tokens = [
+        {
+          role: "system",
+          content: `あなたは日本語で回答するAIチャットボットです。`,
+        },
+        {
+          role: "user",
+          content: `生成されたテキスト内の内容を論理的に、小学生でもわかるように解説してください。 ${imageText}`,
+        },
+      ];
+
+      completion = await openai.createChatCompletion({
+        model: "gpt-3.5-turbo",
+        messages: tokens,
+      });
+      const res = completion.data.choices[0].message.content;
+      tokens.push({ role: "assistant", content: res });
+      return client.replyMessage(token, {
+        type: "text",
+        text: `${res}\n\n●質問があれば、このまま質問文を送信してください\n●会話の内容をリセットするには「このやり取りを終了する」を押してください。`,
+        quickReply: {
+          items: [
+            {
+              type: "action",
+              action: {
+                type: "message",
+                label: "このやり取りを終了する",
+                text: "このやり取りを終了する",
+              },
             },
-          },
-        ],
-      },
-    });
+          ],
+        },
+      });
+    }
   }
 };
 
@@ -497,6 +505,6 @@ const generateConfirmationReply = (mode) => {
   } else if (mode == "わかりやすく解説") {
     return "解説して欲しい画像がこれで全てであれば、「はい」を押してください。";
   }
-}
+};
 
 module.exports = router;
