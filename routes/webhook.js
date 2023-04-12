@@ -67,6 +67,8 @@ const handlerEvent = async (event) => {
                 await requestChatgpt(replyToken, mode, images.join());
                 images = [];
               }
+            } else if (message.text == "いいえ"){
+              await replyText(replyToken, "引き続き選択してください。")
             } else if (message.text == "要約を作成") {
               mode = "要約を作成";
               displayQuickReply(replyToken, mode);
@@ -133,6 +135,8 @@ const handlerEvent = async (event) => {
             } else if (message.text == "はい") {
               await requestChatgpt(replyToken, mode, images.join());
               images = [];
+            } else if (message.text == "いいえ"){
+              await replyText(replyToken, "引き続き選択してください。")
             } else {
               tokens.push({ role: "user", content: message.text });
               await freeTalkChatgpt(replyToken);
